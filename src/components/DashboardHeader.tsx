@@ -1,34 +1,25 @@
-import { Wifi, WifiOff, Smartphone, Activity } from "lucide-react";
+import { Wifi, WifiOff, Smartphone, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DashboardHeaderProps {
   connected: boolean;
   lastCommand: string;
+  title: string;
 }
 
-export function DashboardHeader({ connected, lastCommand }: DashboardHeaderProps) {
+export function DashboardHeader({ connected, lastCommand, title }: DashboardHeaderProps) {
   return (
     <motion.header
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10"
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pl-14 lg:pl-0"
     >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <Activity className="h-5 w-5 text-primary icon-glow" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            E-wange
-          </h1>
-          <p className="text-xs text-muted-foreground font-medium tracking-wide">Smart Home Dashboard</p>
-        </div>
-      </div>
+      <h2 className="text-xl font-bold text-foreground tracking-tight">{title}</h2>
 
       <div className="flex items-center gap-3">
         {/* GSM command */}
-        <div className="glass-card flex items-center gap-2.5 px-4 py-2.5">
+        <div className="glass-card flex items-center gap-2.5 px-4 py-2">
           <Smartphone className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">GSM</span>
           <div className="w-px h-3.5 bg-border" />
@@ -36,7 +27,7 @@ export function DashboardHeader({ connected, lastCommand }: DashboardHeaderProps
         </div>
 
         {/* Connection status */}
-        <div className={`glass-card flex items-center gap-2 px-4 py-2.5 ${
+        <div className={`glass-card flex items-center gap-2 px-4 py-2 ${
           connected ? "border-success/20" : "border-destructive/20"
         }`}>
           {connected ? (
