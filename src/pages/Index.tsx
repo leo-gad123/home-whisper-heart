@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFirebaseData } from "@/hooks/useFirebaseData";
+import { useHistoryLogger } from "@/hooks/useHistoryLogger";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Sidebar } from "@/components/Sidebar";
 import { DoorCard } from "@/components/DoorCard";
@@ -25,6 +26,7 @@ const sectionTitles: Record<string, string> = {
 const Index = () => {
   const { data, connected } = useFirebaseData();
   const [activeSection, setActiveSection] = useState("overview");
+  useHistoryLogger(data.temperature, data.humidity);
 
   const gasStatus = data.gas !== "NO" && data.gas !== "—" ? "alert" : "active";
 

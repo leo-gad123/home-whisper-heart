@@ -1,0 +1,336 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, Plus, Edit2, Trash2, Search, X, Shield, Eye } from "lucide-react";
+import { database, ref, onValue, set, push } from "@/lib/firebase";
+import { toast } from "sonner";
+
+interface DashboardUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "viewer";
+  status: "active" | "disabled";
+  createdAt: number;
+}
+
+const UserManagement = () => {
+  const [users, setUsers] = useState<DashboardUser[]>([]);
+  const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editUser, setEditUser] = useState<DashboardUser | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", role: "viewer" as "admin" | "viewer" });
+
+  useEffect(() => {
+    const usersRef = ref(database, "dashboard_users");
+    const unsub = onValue(usersRef, (snap) => {
+      const val = snap.val();
+      if (val) {
+        const list = Object.entries(val).map(([id, data]: [string, any]) => ({ id, ...data }));
+        setUsers(list);
+      } else {
+        setUsers([]);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const filtered = users.filter(
+    (u) =>
+      u.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const openCreate = () => {
+    setEditUser(null);
+    setForm({ name: "", email: "", role: "viewer" });
+    setModalOpen(true);
+  };
+
+  const openEdit = (u: DashboardUser) => {
+    setEditUser(u);
+    setForm({ name: u.name, email: u.email, role: u.role });
+    setModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name || !form.email) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      if (editUser) {
+        await set(ref(database, `dashboard_users/${editUser.id}`), {
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          status: editUser.status,
+          createdAt: editUser.createdAt,
+        });
+        toast.success("User updated successfully");
+      } else {
+        const newRef = push(ref(database, "dashboard_users"));
+        await set(newRef, {
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          status: "active",
+          createdAt: Date.now(),
+        });
+        toast.success("User created successfully");
+      }
+      setModalOpen(false);
+    } catch {
+      toast.error("Failed to save user");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await set(ref(database, `dashboard_users/${id}`), null);
+      toast.success("User deleted");
+      setDeleteConfirm(null);
+    } catch {
+      toast.error("Failed to delete user");
+    }
+  };
+
+  const toggleStatus = async (u: DashboardUser) => {
+    const newStatus = u.status === "active" ? "disabled" : "active";
+    await set(ref(database, `dashboard_users/${u.id}/status`), newStatus);
+    toast.success(`User ${newStatus === "active" ? "enabled" : "disabled"}`);
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-1">User Management</h2>
+          <p className="text-sm text-muted-foreground">{users.length} registered users</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all"
+        >
+          <Plus className="h-4 w-4" />
+          Add User
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full h-11 rounded-xl bg-secondary border border-border pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+        />
+      </div>
+
+      {/* User Table */}
+      <div className="glass-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Name</th>
+                <th className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Email</th>
+                <th className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Role</th>
+                <th className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="text-right px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {filtered.map((u) => (
+                  <motion.tr
+                    key={u.id}
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="border-b border-border/50 hover:bg-secondary/30 transition-colors"
+                  >
+                    <td className="px-5 py-4 text-sm font-medium text-foreground">{u.name}</td>
+                    <td className="px-5 py-4 text-sm text-muted-foreground">{u.email}</td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-lg ${
+                        u.role === "admin" ? "bg-accent/15 text-accent" : "bg-info/15 text-info"
+                      }`}>
+                        {u.role === "admin" ? <Shield className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <button onClick={() => toggleStatus(u)} className="cursor-pointer">
+                        <span className={`text-xs font-mono px-2.5 py-1 rounded-lg ${
+                          u.status === "active" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                        }`}>
+                          {u.status}
+                        </span>
+                      </button>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(u)}
+                          className="w-8 h-8 rounded-lg bg-secondary hover:bg-info/15 text-muted-foreground hover:text-info flex items-center justify-center transition-all"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(u.id)}
+                          className="w-8 h-8 rounded-lg bg-secondary hover:bg-destructive/15 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-sm text-muted-foreground">
+                    No users found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create/Edit Modal */}
+      <AnimatePresence>
+        {modalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-foreground">{editUser ? "Edit User" : "Create User"}</h3>
+                <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Name</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full h-11 rounded-xl bg-secondary border border-border px-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Email</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full h-11 rounded-xl bg-secondary border border-border px-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="user@ewange.com"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Role</label>
+                  <div className="flex gap-3">
+                    {(["admin", "viewer"] as const).map((role) => (
+                      <button
+                        key={role}
+                        onClick={() => setForm({ ...form, role })}
+                        className={`flex-1 h-11 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                          form.role === role
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {role === "admin" ? <Shield className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="flex-1 h-11 rounded-xl bg-secondary text-muted-foreground text-sm font-medium hover:text-foreground transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all"
+                >
+                  {editUser ? "Update" : "Create"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 w-full max-w-sm text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 rounded-2xl bg-destructive/15 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="h-6 w-6 text-destructive" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">Delete User?</h3>
+              <p className="text-sm text-muted-foreground mb-6">This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 h-11 rounded-xl bg-secondary text-muted-foreground text-sm font-medium hover:text-foreground transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(deleteConfirm)}
+                  className="flex-1 h-11 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 transition-all"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default UserManagement;
