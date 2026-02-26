@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { database, ref, push } from "@/lib/firebase";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useHistoryLogger(temperature: number, humidity: number) {
   const lastTemp = useRef<number | null>(null);
@@ -8,16 +8,26 @@ export function useHistoryLogger(temperature: number, humidity: number) {
   useEffect(() => {
     if (temperature === 0 && humidity === 0) return;
 
-    const now = Date.now();
+    const logData = async () => {
+      // Check if user is authenticated (admin) before logging
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-    if (lastTemp.current !== null && lastTemp.current !== temperature) {
-      push(ref(database, "temperature_history"), { value: temperature, timestamp: now });
-    }
-    lastTemp.current = temperature;
+      if (lastTemp.current !== null && lastTemp.current !== temperature) {
+        await supabase.functions.invoke("admin-api", {
+          body: { action: "log_history", type: "temperature", value: temperature },
+        });
+      }
+      lastTemp.current = temperature;
 
-    if (lastHumidity.current !== null && lastHumidity.current !== humidity) {
-      push(ref(database, "humidity_history"), { value: humidity, timestamp: now });
-    }
-    lastHumidity.current = humidity;
+      if (lastHumidity.current !== null && lastHumidity.current !== humidity) {
+        await supabase.functions.invoke("admin-api", {
+          body: { action: "log_history", type: "humidity", value: humidity },
+        });
+      }
+      lastHumidity.current = humidity;
+    };
+
+    logData();
   }, [temperature, humidity]);
 }

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { auth, database, ref, onValue, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "@/lib/firebase";
-import type { User } from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
@@ -18,28 +18,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        const roleRef = ref(database, `users/${firebaseUser.uid}/role`);
-        onValue(roleRef, (snap) => {
-          setRole(snap.val() || "admin");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        // Fetch role from user_roles table using security definer function
+        const { data } = await supabase.rpc("is_admin");
+        setRole(data ? "admin" : "viewer");
+      } else {
+        setRole("viewer");
+      }
+      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        supabase.rpc("is_admin").then(({ data }) => {
+          setRole(data ? "admin" : "viewer");
           setLoading(false);
         });
       } else {
-        setRole("viewer");
         setLoading(false);
       }
     });
-    return () => unsubscribe();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
   };
 
   return (
