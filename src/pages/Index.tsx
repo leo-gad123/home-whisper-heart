@@ -8,6 +8,7 @@ import { StatusCard } from "@/components/StatusCard";
 import { EnvironmentGauge } from "@/components/EnvironmentGauge";
 import { ParkingSection } from "@/components/ParkingSection";
 import { ControlCard } from "@/components/ControlCard";
+import { ChatBot } from "@/components/ChatBot";
 import {
   Lightbulb,
   Fan,
@@ -109,6 +110,8 @@ const Index = () => {
         {activeSection === "environment" && renderEnvironment()}
         {activeSection === "parking" && renderParking()}
       </main>
+
+      <ChatBot homeData={data} />
     </div>
   );
 };
