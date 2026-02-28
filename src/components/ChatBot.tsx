@@ -10,6 +10,7 @@ import { database, ref, set } from "@/lib/firebase";
 import type { HomeData } from "@/hooks/useFirebaseData";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 interface Message {
   role: "user" | "assistant";
@@ -22,14 +23,57 @@ interface ChatBotProps {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chatbot`;
 
+// Quick command matching for instant execution
+const QUICK_COMMANDS: { patterns: RegExp[]; key: string; value: string; response: string }[] = [
+  { patterns: [/\blamp\s*(on|open)\b/i, /\bturn\s*on\s*(the\s*)?lamp\b/i, /\blight\s*(on)\b/i], key: "lamp", value: "ON", response: "💡 Lamp ON." },
+  { patterns: [/\blamp\s*(off|close)\b/i, /\bturn\s*off\s*(the\s*)?lamp\b/i, /\blight\s*(off)\b/i], key: "lamp", value: "OFF", response: "💡 Lamp OFF." },
+  { patterns: [/\bfan\s*(on|open)\b/i, /\bturn\s*on\s*(the\s*)?fan\b/i], key: "fan", value: "ON", response: "🌀 Fan ON." },
+  { patterns: [/\bfan\s*(off|close)\b/i, /\bturn\s*off\s*(the\s*)?fan\b/i], key: "fan", value: "OFF", response: "🌀 Fan OFF." },
+  { patterns: [/\bcurtain(s)?\s*(open)\b/i, /\bopen\s*(the\s*)?curtain/i], key: "curtains", value: "Open", response: "🪟 Curtains opened." },
+  { patterns: [/\bcurtain(s)?\s*(close|closed)\b/i, /\bclose\s*(the\s*)?curtain/i], key: "curtains", value: "Closed", response: "🪟 Curtains closed." },
+  { patterns: [/\bcurtain(s)?\s*(partial|half)\b/i], key: "curtains", value: "Partial", response: "🪟 Curtains partial." },
+  { patterns: [/\bwater\s*pump\s*(on)\b/i, /\bpump\s*(on)\b/i, /\bturn\s*on\s*(the\s*)?pump\b/i], key: "water_pump", value: "ON", response: "💧 Water pump ON." },
+  { patterns: [/\bwater\s*pump\s*(off)\b/i, /\bpump\s*(off)\b/i, /\bturn\s*off\s*(the\s*)?pump\b/i], key: "water_pump", value: "OFF", response: "💧 Water pump OFF." },
+  { patterns: [/\b(open|raise)\s*(the\s*)?(parking\s*)?gate\b/i, /\bgate\s*(open|up)\b/i], key: "parking_gate", value: "Open", response: "🚗 Gate opened." },
+  { patterns: [/\b(close|lower)\s*(the\s*)?(parking\s*)?gate\b/i, /\bgate\s*(close|closed|down)\b/i], key: "parking_gate", value: "Closed", response: "🚗 Gate closed." },
+  { patterns: [/\bbuzzer\s*(on)\b/i], key: "buzzer", value: "ON", response: "🔔 Buzzer ON." },
+  { patterns: [/\bbuzzer\s*(off)\b/i], key: "buzzer", value: "OFF", response: "🔔 Buzzer OFF." },
+];
+
+// Quick status queries
+const STATUS_QUERIES: { patterns: RegExp[]; getResponse: (d: HomeData) => string }[] = [
+  { patterns: [/\btemp(erature)?\s*(status|reading|now|check)?\b/i, /\bhow\s*hot\b/i], getResponse: (d) => `🌡️ ${d.temperature}°C, ${d.humidity}% humidity.` },
+  { patterns: [/\bhumidity\s*(status|reading|level)?\b/i], getResponse: (d) => `💧 Humidity: ${d.humidity}%.` },
+  { patterns: [/\bgas\s*(status|sensor|level|reading)?\b/i], getResponse: (d) => d.gas === "NO" ? "✅ Gas: Safe." : `⚠️ Gas detected: ${d.gas}!` },
+  { patterns: [/\bparking\s*(status|slots?|available)?\b/i], getResponse: (d) => `🅿️ Parking: ${d.parking_slots} slots, gate ${d.parking_gate}.` },
+  { patterns: [/\bmain\s*door\s*(status|state)?\b/i, /\bis\s*(the\s*)?main\s*door\b/i], getResponse: (d) => `🚪 Main door: ${d.main_door.door_state} (${d.main_door.access}).` },
+  { patterns: [/\bside\s*door\s*(status|state)?\b/i], getResponse: (d) => `🚪 Side door: ${d.side_door.door_state} (${d.side_door.access}).` },
+];
+
+function tryQuickCommand(text: string, role: string, homeData: HomeData): { response: string; action?: { key: string; value: string } } | null {
+  // Check status queries first
+  for (const q of STATUS_QUERIES) {
+    if (q.patterns.some((p) => p.test(text))) {
+      return { response: q.getResponse(homeData) };
+    }
+  }
+
+  // Check device commands
+  if (role !== "admin") return null;
+  for (const cmd of QUICK_COMMANDS) {
+    if (cmd.patterns.some((p) => p.test(text))) {
+      return { response: cmd.response, action: { key: cmd.key, value: cmd.value } };
+    }
+  }
+  return null;
+}
+
 function parseActions(text: string): { key: string; value: string }[] {
   const actions: { key: string; value: string }[] = [];
   const regex = /:::ACTION:::(.*?):::END:::/gs;
   let match;
   while ((match = regex.exec(text)) !== null) {
-    try {
-      actions.push(JSON.parse(match[1]));
-    } catch {}
+    try { actions.push(JSON.parse(match[1])); } catch {}
   }
   return actions;
 }
@@ -44,21 +88,27 @@ export function ChatBot({ homeData }: ChatBotProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
+  const [commandFeedback, setCommandFeedback] = useState<"success" | "error" | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { isListening, isSpeaking, startListening, stopListening, speak, stopSpeaking } = useSpeech();
   const { user, role } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isLoading]);
+
+  // Clear feedback after animation
+  useEffect(() => {
+    if (commandFeedback) {
+      const t = setTimeout(() => setCommandFeedback(null), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [commandFeedback]);
 
   const executeActions = useCallback((actions: { key: string; value: string }[]) => {
     for (const action of actions) {
-      const dbRef = ref(database, `/${action.key}`);
-      set(dbRef, action.value);
+      set(ref(database, `/${action.key}`), action.value);
     }
   }, []);
 
@@ -66,18 +116,36 @@ export function ChatBot({ homeData }: ChatBotProps) {
     async (text: string) => {
       if (!text.trim() || isLoading) return;
       if (!user) {
-        toast({ title: "Please log in", description: "You need to be authenticated to use the chatbot.", variant: "destructive" });
+        toast({ title: "Please log in", description: "Authentication required.", variant: "destructive" });
         return;
       }
 
       const userMsg: Message = { role: "user", content: text };
+
+      // Try quick command first for instant response
+      const quick = tryQuickCommand(text, role, homeData);
+      if (quick) {
+        const assistantMsg: Message = { role: "assistant", content: quick.response };
+        setMessages((prev) => [...prev, userMsg, assistantMsg]);
+        setInput("");
+
+        if (quick.action) {
+          executeActions([quick.action]);
+          setCommandFeedback("success");
+          sonnerToast.success(quick.response);
+        }
+
+        if (voiceMode) speak(quick.response);
+        return;
+      }
+
+      // Fall through to AI for complex queries
       const newMessages = [...messages, userMsg];
       setMessages(newMessages);
       setInput("");
       setIsLoading(true);
 
       let assistantText = "";
-
       const upsert = (chunk: string) => {
         assistantText += chunk;
         setMessages((prev) => {
@@ -92,20 +160,14 @@ export function ChatBot({ homeData }: ChatBotProps) {
       try {
         const resp = await fetch(CHAT_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
-            homeData,
-            userRole: role,
-          }),
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+          body: JSON.stringify({ messages: newMessages.map((m) => ({ role: m.role, content: m.content })), homeData, userRole: role }),
         });
 
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({ error: "Request failed" }));
           toast({ title: "Error", description: err.error, variant: "destructive" });
+          setCommandFeedback("error");
           setIsLoading(false);
           return;
         }
@@ -119,7 +181,6 @@ export function ChatBot({ homeData }: ChatBotProps) {
           const { done: d, value } = await reader.read();
           if (d) break;
           buffer += decoder.decode(value, { stream: true });
-
           let idx;
           while ((idx = buffer.indexOf("\n")) !== -1) {
             let line = buffer.slice(0, idx);
@@ -139,19 +200,18 @@ export function ChatBot({ homeData }: ChatBotProps) {
           }
         }
 
-        // Execute any device actions
         const actions = parseActions(assistantText);
         if (actions.length > 0) {
           executeActions(actions);
+          setCommandFeedback("success");
+          sonnerToast.success("Command executed");
         }
 
-        // Voice output if voice mode
-        if (voiceMode && assistantText) {
-          speak(assistantText);
-        }
+        if (voiceMode && assistantText) speak(assistantText);
       } catch (e) {
         console.error(e);
         toast({ title: "Error", description: "Failed to get response.", variant: "destructive" });
+        setCommandFeedback("error");
       } finally {
         setIsLoading(false);
       }
@@ -160,14 +220,8 @@ export function ChatBot({ homeData }: ChatBotProps) {
   );
 
   const handleVoiceInput = useCallback(async () => {
-    if (isListening) {
-      stopListening();
-      return;
-    }
-    if (isSpeaking) {
-      stopSpeaking();
-      return;
-    }
+    if (isListening) { stopListening(); return; }
+    if (isSpeaking) { stopSpeaking(); return; }
     try {
       const transcript = await startListening();
       if (transcript) {
@@ -176,12 +230,22 @@ export function ChatBot({ homeData }: ChatBotProps) {
       }
     } catch (err: any) {
       toast({ title: "Voice Error", description: err.message, variant: "destructive" });
+      setCommandFeedback("error");
     }
   }, [isListening, isSpeaking, startListening, stopListening, stopSpeaking, sendMessage, toast]);
 
+  // Mic button glow color
+  const micGlowClass = isListening
+    ? "bg-destructive/15 text-destructive animate-pulse shadow-[0_0_16px_hsl(var(--destructive)/0.4)]"
+    : commandFeedback === "success"
+    ? "bg-success/15 text-success shadow-[0_0_16px_hsl(var(--success)/0.4)]"
+    : commandFeedback === "error"
+    ? "bg-destructive/15 text-destructive shadow-[0_0_16px_hsl(var(--destructive)/0.4)]"
+    : "text-muted-foreground hover:text-foreground";
+
   return (
     <>
-      {/* Floating Action Button */}
+      {/* FAB */}
       <AnimatePresence>
         {!open && (
           <motion.button
@@ -207,11 +271,7 @@ export function ChatBot({ homeData }: ChatBotProps) {
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[540px] max-h-[calc(100vh-4rem)] flex flex-col rounded-2xl border overflow-hidden"
-            style={{
-              background: "hsl(225 20% 8% / 0.95)",
-              borderColor: "hsl(225 15% 20% / 0.5)",
-              backdropFilter: "blur(24px)",
-            }}
+            style={{ background: "hsl(225 20% 8% / 0.95)", borderColor: "hsl(225 15% 20% / 0.5)", backdropFilter: "blur(24px)" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
@@ -221,16 +281,11 @@ export function ChatBot({ homeData }: ChatBotProps) {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">E-wange AI</h3>
-                  <p className="text-[10px] text-muted-foreground">Smart Home Assistant</p>
+                  <p className="text-[10px] text-muted-foreground">Voice & Text Control</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`h-8 w-8 rounded-lg ${voiceMode ? "bg-primary/15 text-primary" : ""}`}
-                  onClick={() => setVoiceMode(!voiceMode)}
-                >
+                <Button variant="ghost" size="icon" className={`h-8 w-8 rounded-lg ${voiceMode ? "bg-primary/15 text-primary" : ""}`} onClick={() => setVoiceMode(!voiceMode)}>
                   <Volume2 className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setOpen(false)}>
@@ -247,14 +302,10 @@ export function ChatBot({ homeData }: ChatBotProps) {
                     <Bot className="h-6 w-6 text-primary" />
                   </div>
                   <p className="text-sm font-medium text-foreground mb-1">Hi! I'm E-wange AI</p>
-                  <p className="text-xs text-muted-foreground mb-4">Ask me about your home or control devices</p>
+                  <p className="text-xs text-muted-foreground mb-4">Say a command or ask a question</p>
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {["What's the temperature?", "Turn on the lamp", "Is the main door open?"].map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => sendMessage(q)}
-                        className="px-3 py-1.5 rounded-xl text-[11px] bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border transition-colors"
-                      >
+                    {["Lamp on", "Fan off", "Temperature", "Gate open"].map((q) => (
+                      <button key={q} onClick={() => sendMessage(q)} className="px-3 py-1.5 rounded-xl text-[11px] bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border transition-colors">
                         {q}
                       </button>
                     ))}
@@ -264,32 +315,18 @@ export function ChatBot({ homeData }: ChatBotProps) {
 
               <div className="space-y-3">
                 {messages.map((msg, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
+                  <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "assistant" && (
                       <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0 mt-1">
                         <Bot className="h-3 w-3 text-primary" />
                       </div>
                     )}
-                    <div
-                      className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-secondary text-secondary-foreground rounded-bl-md"
-                      }`}
-                    >
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"}`}>
                       {msg.role === "assistant" ? (
                         <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-relaxed">
                           <ReactMarkdown>{cleanMessage(msg.content)}</ReactMarkdown>
                         </div>
-                      ) : (
-                        msg.content
-                      )}
+                      ) : msg.content}
                     </div>
                     {msg.role === "user" && (
                       <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center flex-shrink-0 mt-1">
@@ -300,11 +337,7 @@ export function ChatBot({ homeData }: ChatBotProps) {
                 ))}
 
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex gap-2 items-center"
-                  >
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 items-center">
                     <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center">
                       <Bot className="h-3 w-3 text-primary" />
                     </div>
@@ -320,50 +353,21 @@ export function ChatBot({ homeData }: ChatBotProps) {
 
             {/* Input */}
             <div className="px-3 py-3 border-t border-border/50">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  sendMessage(input);
-                }}
-                className="flex gap-2 items-center"
-              >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleVoiceInput}
-                  className={`h-9 w-9 rounded-xl flex-shrink-0 transition-all ${
-                    isListening
-                      ? "bg-destructive/15 text-destructive animate-pulse"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
+              <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2 items-center">
+                <Button type="button" variant="ghost" size="icon" onClick={handleVoiceInput}
+                  className={`h-9 w-9 rounded-xl flex-shrink-0 transition-all ${micGlowClass}`}>
                   {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </Button>
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={isListening ? "Listening..." : "Ask E-wange AI..."}
-                  className="flex-1 h-9 rounded-xl bg-secondary border-border/50 text-sm"
-                  disabled={isListening || isLoading}
-                />
-                <Button
-                  type="submit"
-                  size="icon"
-                  disabled={!input.trim() || isLoading}
-                  className="h-9 w-9 rounded-xl flex-shrink-0"
-                >
+                <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder={isListening ? "Listening..." : "Say a command..."} className="flex-1 h-9 rounded-xl bg-secondary border-border/50 text-sm" disabled={isListening || isLoading} />
+                <Button type="submit" size="icon" disabled={!input.trim() || isLoading} className="h-9 w-9 rounded-xl flex-shrink-0">
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
               {isListening && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-[10px] text-center text-destructive mt-1.5"
-                >
-                  🎙️ Listening... tap mic to stop
-                </motion.p>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center gap-2 mt-2">
+                  <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 rounded-full bg-destructive" />
+                  <p className="text-[10px] text-destructive">Listening... tap to stop</p>
+                </motion.div>
               )}
             </div>
           </motion.div>

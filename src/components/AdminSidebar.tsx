@@ -1,4 +1,4 @@
-import { Activity, Users, Settings, BarChart3, LayoutDashboard, Menu, X, LogOut } from "lucide-react";
+import { Activity, Users, Settings, BarChart3, LayoutDashboard, Menu, X, LogOut, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { id: "/admin", label: "Overview", icon: LayoutDashboard },
   { id: "/admin/users", label: "User Management", icon: Users },
+  { id: "/admin/devices", label: "Device Management", icon: Cpu },
   { id: "/admin/settings", label: "System Config", icon: Settings },
   { id: "/admin/history", label: "Data History", icon: BarChart3 },
 ];
