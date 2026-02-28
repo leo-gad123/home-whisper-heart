@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,14 +13,16 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const pendingLoginRef = useRef(false);
 
-  // Auto-redirect if already logged in
+  // Auto-redirect if already logged in OR after login when role resolves
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && role) {
       setExiting(true);
+      const target = role === "admin" ? "/admin" : "/dashboard";
       const timer = setTimeout(() => {
-        navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
-      }, 500);
+        navigate(target, { replace: true });
+      }, 400);
       return () => clearTimeout(timer);
     }
   }, [user, authLoading, role, navigate]);
@@ -30,14 +32,11 @@ const Login = () => {
     setLoading(true);
     try {
       await login(email, password);
+      pendingLoginRef.current = true;
       toast.success("Welcome back!");
-      setExiting(true);
-      setTimeout(() => {
-        navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
-      }, 500);
+      // Role resolves via onAuthStateChange → useEffect handles redirect
     } catch {
       toast.error("Invalid credentials");
-    } finally {
       setLoading(false);
     }
   };
