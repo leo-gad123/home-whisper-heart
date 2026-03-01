@@ -1,19 +1,20 @@
 import { Car, CircleParking, ChevronUp, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
+import type { ParkingSlot } from "@/hooks/useFirebaseData";
 
 interface ParkingSectionProps {
-  slots: number;
+  slot1: ParkingSlot;
+  slot2: ParkingSlot;
   gateState: string;
 }
 
-export function ParkingSection({ slots, gateState }: ParkingSectionProps) {
-  const maxSlots = 2;
+export function ParkingSection({ slot1, slot2, gateState }: ParkingSectionProps) {
   const isGateOpen = gateState.includes("Open");
 
-  // slots value represents free slots; derive per-slot status
-  const slotStatuses = Array.from({ length: maxSlots }, (_, i) =>
-    i < maxSlots - slots ? "occupied" : "free"
-  );
+  const slots = [
+    { label: "Slot 1", data: slot1 },
+    { label: "Slot 2", data: slot2 },
+  ];
 
   return (
     <motion.div
@@ -26,8 +27,8 @@ export function ParkingSection({ slots, gateState }: ParkingSectionProps) {
 
       {/* Slots */}
       <div className="grid grid-cols-2 gap-3 mt-5">
-        {slotStatuses.map((status, i) => {
-          const occupied = status === "occupied";
+        {slots.map(({ label, data }, i) => {
+          const occupied = data.status?.toLowerCase() === "occupied";
           return (
             <div
               key={i}
@@ -42,7 +43,7 @@ export function ParkingSection({ slots, gateState }: ParkingSectionProps) {
               ) : (
                 <CircleParking className={`h-6 w-6 text-success`} />
               )}
-              <span className="text-xs font-semibold font-mono">Slot {i + 1}</span>
+              <span className="text-xs font-semibold font-mono">{label}</span>
               <span className={`text-[10px] font-semibold uppercase tracking-wider ${
                 occupied ? "text-warning" : "text-success"
               }`}>

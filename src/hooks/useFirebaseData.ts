@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { database, ref, onValue } from "@/lib/firebase";
 
+export interface ParkingSlot {
+  status: string;
+}
+
 export interface HomeData {
   main_door: { access: string; door_state: string };
   side_door: { access: string; door_state: string };
@@ -11,8 +15,11 @@ export interface HomeData {
   temperature: number;
   humidity: number;
   gas: string;
-  parking_slots: number;
-  parking_gate: string;
+  parking: {
+    slot1: ParkingSlot;
+    slot2: ParkingSlot;
+    gate: string;
+  };
   water_pump: string;
   gsm_last_command: string;
 }
@@ -27,8 +34,11 @@ const defaultData: HomeData = {
   temperature: 0,
   humidity: 0,
   gas: "—",
-  parking_slots: 0,
-  parking_gate: "—",
+  parking: {
+    slot1: { status: "—" },
+    slot2: { status: "—" },
+    gate: "—",
+  },
   water_pump: "—",
   gsm_last_command: "—",
 };
