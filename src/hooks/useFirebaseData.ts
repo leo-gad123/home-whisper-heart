@@ -78,6 +78,24 @@ export function useFirebaseData() {
       return { access: "—", door_state: "—" };
     };
 
+    // Convert a parking slot value to "Occupied" or "Free"
+    // 0 means free, any other value means occupied
+    const slotStatus = (v: unknown): string => {
+      if (v == null) return "—";
+      let raw: unknown = v;
+      if (typeof v === "object") {
+        const obj = v as Record<string, unknown>;
+        raw = obj.status ?? obj.value ?? v;
+        // If still an object, bail out
+        if (typeof raw === "object") return "—";
+      }
+      const n = Number(raw);
+      if (!isNaN(n)) return n === 0 ? "Free" : "Occupied";
+      // If it's already a descriptive string, pass through
+      if (typeof raw === "string") return raw;
+      return "—";
+    };
+
     const dbRef = ref(database, "/");
     const unsubscribe = onValue(
       dbRef,
@@ -96,8 +114,8 @@ export function useFirebaseData() {
             humidity: num(val.humidity),
             gas: str(val.gas),
             parking: {
-              slot1: { status: str(parking.slot1) },
-              slot2: { status: str(parking.slot2) },
+              slot1: { status: slotStatus(parking.slot1) },
+              slot2: { status: slotStatus(parking.slot2) },
               gate: str(parking.gate),
             },
             water_pump: str(val.water_pump),
