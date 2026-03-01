@@ -54,7 +54,14 @@ export function useFirebaseData() {
       (snapshot) => {
         const val = snapshot.val();
         if (val) {
-          setData({ ...defaultData, ...val });
+          // Safely extract parking data which may have nested objects
+          const parking = val.parking || {};
+          const safeParking = {
+            slot1: { status: typeof parking.slot1 === "object" ? (parking.slot1?.status ?? "—") : String(parking.slot1 ?? "—") },
+            slot2: { status: typeof parking.slot2 === "object" ? (parking.slot2?.status ?? "—") : String(parking.slot2 ?? "—") },
+            gate: typeof parking.gate === "object" ? (parking.gate?.status ?? parking.gate?.value ?? "—") : String(parking.gate ?? "—"),
+          };
+          setData({ ...defaultData, ...val, parking: safeParking });
           setConnected(true);
         }
       },
