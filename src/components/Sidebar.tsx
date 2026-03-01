@@ -1,6 +1,8 @@
-import { Activity, DoorOpen, Thermometer, Car, Menu, X } from "lucide-react";
+import { Activity, DoorOpen, Thermometer, Car, Menu, X, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   activeSection: string;
@@ -16,6 +18,13 @@ const navItems = [
 
 export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const navContent = (
     <nav className="flex flex-col gap-1.5 mt-6">
@@ -88,7 +97,14 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
 
         {navContent}
 
-        <div className="mt-auto">
+        <div className="mt-auto space-y-3">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-300"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </button>
           <div className="glass-card p-4 text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">System</p>
             <p className="text-xs text-foreground font-mono">v1.0</p>

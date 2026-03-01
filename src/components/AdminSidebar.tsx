@@ -47,7 +47,7 @@ export function AdminSidebar() {
       })}
 
       <button
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/dashboard")}
         className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all duration-300 mt-2"
       >
         <Activity className="h-4 w-4" />
