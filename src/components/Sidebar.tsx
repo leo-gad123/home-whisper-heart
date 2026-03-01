@@ -11,7 +11,7 @@ interface SidebarProps {
 
 const navItems = [
   { id: "overview", label: "Dashboard", icon: Activity },
-  { id: "doors", label: "Doors & Security", icon: DoorOpen },
+  { id: "doors", label: "Door & Security", icon: DoorOpen },
   { id: "environment", label: "Environment", icon: Thermometer },
   { id: "parking", label: "Parking & Gate", icon: Car },
 ];

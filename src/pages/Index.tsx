@@ -19,7 +19,7 @@ import {
 
 const sectionTitles: Record<string, string> = {
   overview: "Dashboard",
-  doors: "Doors & Security",
+  doors: "Door & Security",
   environment: "Environment & Automation",
   parking: "Parking & Gate",
 };
@@ -35,11 +35,10 @@ const Index = () => {
     <section className="mb-8">
       <h3 className="section-label mb-4 flex items-center gap-2">
         <div className="w-1 h-3 rounded-full bg-primary" />
-        Doors & Security
+        Door & Security
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <DoorCard label="Main Door" access={data.main_door.access} doorState={data.main_door.door_state} index={0} />
-        <DoorCard label="Side Door" access={data.side_door.access} doorState={data.side_door.door_state} index={1} />
+        <DoorCard label="Main Door" access={data.main_door.access} doorState={data.main_door.door_state} userName={data.main_door.user_name} index={0} />
       </div>
     </section>
   );
