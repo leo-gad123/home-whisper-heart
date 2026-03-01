@@ -48,20 +48,61 @@ export function useFirebaseData() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    // Helper: extract a string from a value that may be a plain string or an object with status/value keys
+    const str = (v: unknown): string => {
+      if (v == null) return "—";
+      if (typeof v === "string") return v;
+      if (typeof v === "number") return String(v);
+      if (typeof v === "object") {
+        const obj = v as Record<string, unknown>;
+        if (obj.status != null) return String(obj.status);
+        if (obj.value != null) return String(obj.value);
+      }
+      return "—";
+    };
+
+    const num = (v: unknown): number => {
+      if (typeof v === "number") return v;
+      if (typeof v === "object" && v != null) {
+        const obj = v as Record<string, unknown>;
+        if (typeof obj.value === "number") return obj.value;
+      }
+      return Number(v) || 0;
+    };
+
+    const door = (v: unknown): { access: string; door_state: string } => {
+      if (typeof v === "object" && v != null) {
+        const obj = v as Record<string, unknown>;
+        return { access: str(obj.access), door_state: str(obj.door_state) };
+      }
+      return { access: "—", door_state: "—" };
+    };
+
     const dbRef = ref(database, "/");
     const unsubscribe = onValue(
       dbRef,
       (snapshot) => {
         const val = snapshot.val();
         if (val) {
-          // Safely extract parking data which may have nested objects
           const parking = val.parking || {};
-          const safeParking = {
-            slot1: { status: typeof parking.slot1 === "object" ? (parking.slot1?.status ?? "—") : String(parking.slot1 ?? "—") },
-            slot2: { status: typeof parking.slot2 === "object" ? (parking.slot2?.status ?? "—") : String(parking.slot2 ?? "—") },
-            gate: typeof parking.gate === "object" ? (parking.gate?.status ?? parking.gate?.value ?? "—") : String(parking.gate ?? "—"),
-          };
-          setData({ ...defaultData, ...val, parking: safeParking });
+          setData({
+            main_door: door(val.main_door),
+            side_door: door(val.side_door),
+            buzzer: str(val.buzzer),
+            lamp: str(val.lamp),
+            fan: str(val.fan),
+            curtains: str(val.curtains),
+            temperature: num(val.temperature),
+            humidity: num(val.humidity),
+            gas: str(val.gas),
+            parking: {
+              slot1: { status: str(parking.slot1) },
+              slot2: { status: str(parking.slot2) },
+              gate: str(parking.gate),
+            },
+            water_pump: str(val.water_pump),
+            gsm_last_command: str(val.gsm_last_command),
+          });
           setConnected(true);
         }
       },
