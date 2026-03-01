@@ -17,12 +17,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState("viewer");
   const [loading, setLoading] = useState(true);
   const initialized = useRef(false);
+  const resolvingRole = useRef(false);
 
   const resolveRole = async (u: User | null) => {
+    // Prevent concurrent role resolution calls
+    if (resolvingRole.current) return;
+    resolvingRole.current = true;
+
     if (!u) {
       setUser(null);
       setRole("viewer");
       setLoading(false);
+      resolvingRole.current = false;
       return;
     }
     setUser(u);
@@ -33,10 +39,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole("viewer");
     }
     setLoading(false);
+    resolvingRole.current = false;
   };
 
   useEffect(() => {
-    // Get initial session first
+    // Listen for auth changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only resolve role on meaningful events, NOT on token refreshes
+      if (event === "TOKEN_REFRESHED") return;
+
+      initialized.current = true;
+      resolveRole(session?.user ?? null);
+    });
+
+    // Then get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!initialized.current) {
         initialized.current = true;
@@ -44,19 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Listen for future changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (initialized.current) {
-        resolveRole(session?.user ?? null);
-      } else {
-        initialized.current = true;
-        resolveRole(session?.user ?? null);
-      }
-    });
-
-    // Safety timeout - never stay loading forever
+    // Safety timeout
     const timeout = setTimeout(() => {
-      if (loading) setLoading(false);
+      setLoading(false);
     }, 5000);
 
     return () => {
