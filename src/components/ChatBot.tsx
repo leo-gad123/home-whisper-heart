@@ -45,7 +45,7 @@ const STATUS_QUERIES: { patterns: RegExp[]; getResponse: (d: HomeData) => string
   { patterns: [/\btemp(erature)?\s*(status|reading|now|check)?\b/i, /\bhow\s*hot\b/i], getResponse: (d) => `🌡️ ${d.temperature}°C, ${d.humidity}% humidity.` },
   { patterns: [/\bhumidity\s*(status|reading|level)?\b/i], getResponse: (d) => `💧 Humidity: ${d.humidity}%.` },
   { patterns: [/\bgas\s*(status|sensor|level|reading)?\b/i], getResponse: (d) => d.gas === "NO" ? "✅ Gas: Safe." : `⚠️ Gas detected: ${d.gas}!` },
-  { patterns: [/\bparking\s*(status|slots?|available)?\b/i], getResponse: (d) => `🅿️ Parking: ${d.parking_slots} slots, gate ${d.parking_gate}.` },
+  { patterns: [/\bparking\s*(status|slots?|available)?\b/i], getResponse: (d) => `🅿️ Slot1: ${d.parking.slot1.status}, Slot2: ${d.parking.slot2.status}, Gate: ${d.parking.gate}.` },
   { patterns: [/\bmain\s*door\s*(status|state)?\b/i, /\bis\s*(the\s*)?main\s*door\b/i], getResponse: (d) => `🚪 Main door: ${d.main_door.door_state} (${d.main_door.access}).` },
   { patterns: [/\bside\s*door\s*(status|state)?\b/i], getResponse: (d) => `🚪 Side door: ${d.side_door.door_state} (${d.side_door.access}).` },
 ];

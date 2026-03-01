@@ -83,7 +83,7 @@ const Index = () => {
         Parking & Gate
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <ParkingSection slots={data.parking_slots} gateState={data.parking_gate} />
+        <ParkingSection slot1={data.parking.slot1} slot2={data.parking.slot2} gateState={data.parking.gate} />
       </div>
     </section>
   );

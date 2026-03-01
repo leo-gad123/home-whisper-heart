@@ -69,7 +69,7 @@ const AdminOverview = () => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Parking Slots</span>
-              <span className="text-sm font-mono text-foreground">{data.parking_slots}/2</span>
+              <span className="text-sm font-mono text-foreground">S1: {data.parking.slot1.status} / S2: {data.parking.slot2.status}</span>
             </div>
           </div>
         </motion.div>
@@ -88,7 +88,7 @@ const AdminOverview = () => {
               { label: "Curtains", value: data.curtains },
               { label: "Water Pump", value: data.water_pump },
               { label: "Buzzer", value: data.buzzer },
-              { label: "Parking Gate", value: data.parking_gate },
+              { label: "Parking Gate", value: data.parking.gate },
             ].map((d) => (
               <div key={d.label} className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{d.label}</span>
