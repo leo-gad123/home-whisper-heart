@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -16,36 +16,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState("viewer");
   const [loading, setLoading] = useState(true);
+  const initialized = useRef(false);
+
+  const resolveRole = async (u: User | null) => {
+    if (!u) {
+      setUser(null);
+      setRole("viewer");
+      setLoading(false);
+      return;
+    }
+    setUser(u);
+    try {
+      const { data } = await supabase.rpc("is_admin");
+      setRole(data ? "admin" : "viewer");
+    } catch {
+      setRole("viewer");
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        // Fetch role from user_roles table using security definer function
-        const { data } = await supabase.rpc("is_admin");
-        setRole(data ? "admin" : "viewer");
-      } else {
-        setRole("viewer");
-      }
-      setLoading(false);
-    });
-
+    // Get initial session first
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        supabase.rpc("is_admin").then(({ data }) => {
-          setRole(data ? "admin" : "viewer");
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
+      if (!initialized.current) {
+        initialized.current = true;
+        resolveRole(session?.user ?? null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for future changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (initialized.current) {
+        resolveRole(session?.user ?? null);
+      } else {
+        initialized.current = true;
+        resolveRole(session?.user ?? null);
+      }
+    });
+
+    // Safety timeout - never stay loading forever
+    const timeout = setTimeout(() => {
+      if (loading) setLoading(false);
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
