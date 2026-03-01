@@ -68,6 +68,10 @@ const AdminOverview = () => {
               </span>
             </div>
             <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Main Door</span>
+              <span className="text-sm font-mono text-foreground">{data.main_door.door_state} ({data.main_door.access})</span>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Parking Slots</span>
               <span className="text-sm font-mono text-foreground">S1: {data.parking.slot1.status} / S2: {data.parking.slot2.status}</span>
             </div>

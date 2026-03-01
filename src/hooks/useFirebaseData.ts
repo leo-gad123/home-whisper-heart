@@ -6,8 +6,7 @@ export interface ParkingSlot {
 }
 
 export interface HomeData {
-  main_door: { access: string; door_state: string };
-  side_door: { access: string; door_state: string };
+  main_door: { access: string; door_state: string; user_id: string; user_name: string };
   buzzer: string;
   lamp: string;
   fan: string;
@@ -25,8 +24,7 @@ export interface HomeData {
 }
 
 const defaultData: HomeData = {
-  main_door: { access: "—", door_state: "—" },
-  side_door: { access: "—", door_state: "—" },
+  main_door: { access: "—", door_state: "—", user_id: "", user_name: "" },
   buzzer: "—",
   lamp: "—",
   fan: "—",
@@ -48,7 +46,6 @@ export function useFirebaseData() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    // Helper: extract a string from a value that may be a plain string or an object with status/value keys
     const str = (v: unknown): string => {
       if (v == null) return "—";
       if (typeof v === "string") return v;
@@ -70,28 +67,16 @@ export function useFirebaseData() {
       return Number(v) || 0;
     };
 
-    const door = (v: unknown): { access: string; door_state: string } => {
-      if (typeof v === "object" && v != null) {
-        const obj = v as Record<string, unknown>;
-        return { access: str(obj.access), door_state: str(obj.door_state) };
-      }
-      return { access: "—", door_state: "—" };
-    };
-
-    // Convert a parking slot value to "Occupied" or "Free"
-    // 0 means free, any other value means occupied
     const slotStatus = (v: unknown): string => {
       if (v == null) return "—";
       let raw: unknown = v;
       if (typeof v === "object") {
         const obj = v as Record<string, unknown>;
         raw = obj.status ?? obj.value ?? v;
-        // If still an object, bail out
         if (typeof raw === "object") return "—";
       }
       const n = Number(raw);
       if (!isNaN(n)) return n === 0 ? "Free" : "Occupied";
-      // If it's already a descriptive string, pass through
       if (typeof raw === "string") return raw;
       return "—";
     };
@@ -103,9 +88,25 @@ export function useFirebaseData() {
         const val = snapshot.val();
         if (val) {
           const parking = val.parking || {};
+          const mainDoor = (typeof val.main_door === "object" && val.main_door) ? val.main_door : {};
+          const userId = mainDoor.user_id != null ? String(mainDoor.user_id) : "";
+
+          // Look up user name from /users/{user_id}
+          let userName = "";
+          if (userId && val.users && typeof val.users === "object") {
+            const userEntry = val.users[userId];
+            if (userEntry && typeof userEntry === "object" && userEntry.name) {
+              userName = String(userEntry.name);
+            }
+          }
+
           setData({
-            main_door: door(val.main_door),
-            side_door: door(val.side_door),
+            main_door: {
+              access: str(mainDoor.access),
+              door_state: str(mainDoor.door_state),
+              user_id: userId,
+              user_name: userName || (userId ? "Unknown User" : ""),
+            },
             buzzer: str(val.buzzer),
             lamp: str(val.lamp),
             fan: str(val.fan),

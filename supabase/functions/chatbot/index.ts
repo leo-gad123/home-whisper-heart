@@ -49,8 +49,7 @@ serve(async (req) => {
     // Build context message with current home data
     const contextMessage = `
 CURRENT HOME STATE:
-- Main Door: ${homeData.main_door?.door_state || "—"} (Access: ${homeData.main_door?.access || "—"})
-- Side Door: ${homeData.side_door?.door_state || "—"} (Access: ${homeData.side_door?.access || "—"})
+- Main Door: ${homeData.main_door?.door_state || "—"} (Access: ${homeData.main_door?.access || "—"}, User: ${homeData.main_door?.user_name || "—"})
 - Lamp: ${homeData.lamp || "—"}
 - Fan: ${homeData.fan || "—"}
 - Curtains: ${homeData.curtains || "—"}

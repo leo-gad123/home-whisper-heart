@@ -46,8 +46,7 @@ const STATUS_QUERIES: { patterns: RegExp[]; getResponse: (d: HomeData) => string
   { patterns: [/\bhumidity\s*(status|reading|level)?\b/i], getResponse: (d) => `💧 Humidity: ${d.humidity}%.` },
   { patterns: [/\bgas\s*(status|sensor|level|reading)?\b/i], getResponse: (d) => d.gas === "NO" ? "✅ Gas: Safe." : `⚠️ Gas detected: ${d.gas}!` },
   { patterns: [/\bparking\s*(status|slots?|available)?\b/i], getResponse: (d) => `🅿️ Slot1: ${d.parking.slot1.status}, Slot2: ${d.parking.slot2.status}, Gate: ${d.parking.gate}.` },
-  { patterns: [/\bmain\s*door\s*(status|state)?\b/i, /\bis\s*(the\s*)?main\s*door\b/i], getResponse: (d) => `🚪 Main door: ${d.main_door.door_state} (${d.main_door.access}).` },
-  { patterns: [/\bside\s*door\s*(status|state)?\b/i], getResponse: (d) => `🚪 Side door: ${d.side_door.door_state} (${d.side_door.access}).` },
+  { patterns: [/\bmain\s*door\s*(status|state)?\b/i, /\bis\s*(the\s*)?main\s*door\b/i, /\bdoor\s*(status|state)?\b/i], getResponse: (d) => `🚪 Main door: ${d.main_door.door_state} (${d.main_door.access})${d.main_door.user_name ? ` — ${d.main_door.user_name}` : ""}.` },
 ];
 
 function tryQuickCommand(text: string, role: string, homeData: HomeData): { response: string; action?: { key: string; value: string } } | null {
