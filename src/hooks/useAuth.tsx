@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resolvingRole.current = false;
       return;
     }
+    setLoading(true);
     setUser(u);
     try {
       const { data } = await supabase.rpc("is_admin");
