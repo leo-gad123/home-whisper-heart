@@ -86,7 +86,7 @@ export function AdminSidebar() {
         }`}
         style={{ background: "hsl(var(--card))" }}
       >
-        <div className="flex items-center gap-3 px-2 mb-2">
+        <div className="flex items-center gap-3 px-2 mb-2 mt-2 lg:mt-0">
           <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center">
             <Settings className="h-4.5 w-4.5 text-accent icon-glow" />
           </div>
