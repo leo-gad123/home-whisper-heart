@@ -46,22 +46,22 @@ export function StatusCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className={`glass-card p-6 ${className}`}
+      className={`glass-card p-4 sm:p-6 ${className}`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${statusBg[status]}`}>
-            <Icon className={`h-4 w-4 ${statusColors[status]} ${status === "alert" ? "icon-pulse" : ""}`} />
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center ${statusBg[status]}`}>
+            <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${statusColors[status]} ${status === "alert" ? "icon-pulse" : ""}`} />
           </div>
-          <span className="section-label">{title}</span>
+          <span className="section-label text-[9px] sm:text-[10px]">{title}</span>
         </div>
         <div className={dotClass[status]} />
       </div>
-      <div className={`text-2xl font-bold font-mono transition-colors duration-500 ${statusColors[status]}`}>
+      <div className={`text-xl sm:text-2xl font-bold font-mono transition-colors duration-500 ${statusColors[status]}`}>
         {value}
       </div>
       {subtitle && (
-        <p className="text-[11px] text-muted-foreground mt-1.5 font-medium">{subtitle}</p>
+        <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1 sm:mt-1.5 font-medium">{subtitle}</p>
       )}
     </motion.div>
   );

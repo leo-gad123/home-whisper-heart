@@ -1,4 +1,4 @@
-import { Activity, DoorOpen, Thermometer, Car, Menu, X, LogOut } from "lucide-react";
+import { Activity, DoorOpen, Thermometer, Car, Menu, X, LogOut, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -53,10 +53,11 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle */}
+      {/* Mobile toggle — always visible on small screens */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-secondary border border-border flex items-center justify-center text-foreground"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center text-foreground shadow-lg"
+        aria-label="Toggle menu"
       >
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
@@ -68,24 +69,20 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-30 bg-background/80 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <motion.aside
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 flex-shrink-0 p-5 flex flex-col border-r border-border transition-transform duration-300 ${
+      {/* Sidebar — hidden on mobile by default, slides in when open */}
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 flex-shrink-0 p-5 flex flex-col border-r border-border bg-card transition-transform duration-300 ease-in-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
-        style={{ background: "hsl(var(--card))" }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-2 mb-2">
+        <div className="flex items-center gap-3 px-2 mb-2 mt-2 lg:mt-0">
           <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
             <Activity className="h-4.5 w-4.5 text-primary icon-glow" />
           </div>
@@ -110,7 +107,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             <p className="text-xs text-foreground font-mono">v1.0</p>
           </div>
         </div>
-      </motion.aside>
+      </aside>
     </>
   );
 }
