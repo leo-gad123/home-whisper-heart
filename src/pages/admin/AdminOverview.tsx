@@ -17,7 +17,7 @@ const AdminOverview = () => {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-foreground mb-1">Admin Overview</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-1">Admin Overview</h2>
         <p className="text-sm text-muted-foreground">
           Welcome back, <span className="text-foreground font-medium">{user?.email}</span>
         </p>

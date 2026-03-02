@@ -120,7 +120,8 @@ const UserManagement = () => {
           className="w-full h-11 rounded-xl bg-secondary border border-border pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" />
       </div>
 
-      <div className="glass-card overflow-hidden">
+      {/* Desktop table */}
+      <div className="hidden md:block glass-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -167,6 +168,41 @@ const UserManagement = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        <AnimatePresence>
+          {filtered.map((u) => (
+            <motion.div key={u.user_id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass-card p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{u.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate max-w-[200px]">{u.email}</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => openEdit(u)} className="w-8 h-8 rounded-lg bg-secondary hover:bg-info/15 text-muted-foreground hover:text-info flex items-center justify-center transition-all">
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => setDeleteConfirm(u.user_id)} className="w-8 h-8 rounded-lg bg-secondary hover:bg-destructive/15 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className={`inline-flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded-lg ${u.role === "admin" ? "bg-accent/15 text-accent" : "bg-info/15 text-info"}`}>
+                  {u.role === "admin" ? <Shield className="h-3 w-3" /> : <Eye className="h-3 w-3" />} {u.role}
+                </span>
+                <button onClick={() => toggleStatus(u)}>
+                  <span className={`text-xs font-mono px-2.5 py-1 rounded-lg ${u.status === "active" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>{u.status}</span>
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-sm text-muted-foreground">No users found</div>
+        )}
       </div>
 
       {/* Create/Edit Modal */}

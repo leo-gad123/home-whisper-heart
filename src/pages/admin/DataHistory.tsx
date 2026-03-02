@@ -87,16 +87,16 @@ const DataHistory = () => {
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         {TIME_RANGES.map((tr, i) => (
           <button key={tr.label} onClick={() => setRange(i)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${range === i ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${range === i ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
             <Clock className="h-3.5 w-3.5" /> {tr.label}
           </button>
         ))}
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6 mb-4">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-3 sm:p-6 mb-4">
         <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-warning" /> Temperature History
         </h3>
@@ -115,7 +115,7 @@ const DataHistory = () => {
         )}
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-6">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-3 sm:p-6">
         <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-info" /> Humidity History
         </h3>

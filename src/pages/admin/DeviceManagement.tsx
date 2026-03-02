@@ -127,7 +127,8 @@ const DeviceManagement = () => {
           className="w-full h-11 rounded-xl bg-secondary border border-border pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all" />
       </div>
 
-      <div className="glass-card overflow-hidden">
+      {/* Desktop table */}
+      <div className="hidden md:block glass-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -190,6 +191,50 @@ const DeviceManagement = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        <AnimatePresence>
+          {filtered.map((d) => (
+            <motion.div key={d.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass-card p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{d.label}</p>
+                    <p className="text-[11px] text-muted-foreground">{d.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => openEdit(d)} className="w-8 h-8 rounded-lg bg-secondary hover:bg-info/15 text-muted-foreground hover:text-info flex items-center justify-center transition-all">
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => setDeleteConfirm(d.id)} className="w-8 h-8 rounded-lg bg-secondary hover:bg-destructive/15 text-muted-foreground hover:text-destructive flex items-center justify-center transition-all">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className={`text-xs font-mono px-2.5 py-1 rounded-lg ${d.type === "relay" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent"}`}>{d.type}</span>
+                <span className={`inline-flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded-lg ${d.controlPermission === "admin" ? "bg-accent/15 text-accent" : "bg-info/15 text-info"}`}>
+                  {d.controlPermission === "admin" ? <Shield className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {d.controlPermission}
+                </span>
+                <button onClick={() => toggleEnabled(d)}>
+                  <span className={`inline-flex items-center gap-1 text-xs font-mono px-2.5 py-1 rounded-lg ${d.enabled ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
+                    <Power className="h-3 w-3" />
+                    {d.enabled ? "enabled" : "disabled"}
+                  </span>
+                </button>
+              </div>
+              <p className="text-[11px] font-mono text-muted-foreground mt-2">Key: {d.firebaseKey}</p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-sm text-muted-foreground">No devices found</div>
+        )}
       </div>
 
       {/* Create/Edit Modal */}
