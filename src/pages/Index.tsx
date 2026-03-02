@@ -32,24 +32,24 @@ const Index = () => {
   const gasStatus = data.gas !== "NO" && data.gas !== "—" ? "alert" : "active";
 
   const renderDoors = () => (
-    <section className="mb-8">
-      <h3 className="section-label mb-4 flex items-center gap-2">
+    <section className="mb-6 sm:mb-8">
+      <h3 className="section-label mb-3 sm:mb-4 flex items-center gap-2">
         <div className="w-1 h-3 rounded-full bg-primary" />
         Door & Security
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <DoorCard label="Main Door" access={data.main_door.access} doorState={data.main_door.door_state} userName={data.main_door.user_name} index={0} />
       </div>
     </section>
   );
 
   const renderEnvironment = () => (
-    <section className="mb-8">
-      <h3 className="section-label mb-4 flex items-center gap-2">
+    <section className="mb-6 sm:mb-8">
+      <h3 className="section-label mb-3 sm:mb-4 flex items-center gap-2">
         <div className="w-1 h-3 rounded-full bg-primary" />
         Environment & Automation
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <EnvironmentGauge temperature={data.temperature} humidity={data.humidity} />
         <ControlCard title="Lamp" icon={Lightbulb} value={data.lamp} firebaseKey="lamp" index={1} />
         <ControlCard title="Fan" icon={Fan} value={data.fan} firebaseKey="fan" index={2} />
@@ -76,12 +76,12 @@ const Index = () => {
   );
 
   const renderParking = () => (
-    <section className="mb-8">
-      <h3 className="section-label mb-4 flex items-center gap-2">
+    <section className="mb-6 sm:mb-8">
+      <h3 className="section-label mb-3 sm:mb-4 flex items-center gap-2">
         <div className="w-1 h-3 rounded-full bg-primary" />
         Parking & Gate
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <ParkingSection slot1={data.parking.slot1} slot2={data.parking.slot2} gateState={data.parking.gate} />
       </div>
     </section>
@@ -91,7 +91,7 @@ const Index = () => {
     <div className="flex min-h-screen bg-background bg-mesh">
       <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+      <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <DashboardHeader
           connected={connected}
           lastCommand={data.gsm_last_command}
