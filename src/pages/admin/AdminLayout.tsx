@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { ChatBot } from "@/components/ChatBot";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 import { useFirebaseData } from "@/hooks/useFirebaseData";
 
 const AdminLayout = () => {
@@ -13,6 +14,7 @@ const AdminLayout = () => {
         <Outlet />
       </main>
       <ChatBot homeData={data} />
+      <VoiceAssistant homeData={data} />
     </div>
   );
 };

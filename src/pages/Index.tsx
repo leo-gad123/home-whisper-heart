@@ -9,6 +9,7 @@ import { EnvironmentGauge } from "@/components/EnvironmentGauge";
 import { ParkingSection } from "@/components/ParkingSection";
 import { ControlCard } from "@/components/ControlCard";
 import { ChatBot } from "@/components/ChatBot";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 import {
   Lightbulb,
   Fan,
@@ -112,6 +113,7 @@ const Index = () => {
       </main>
 
       <ChatBot homeData={data} />
+      <VoiceAssistant homeData={data} />
     </div>
   );
 };
