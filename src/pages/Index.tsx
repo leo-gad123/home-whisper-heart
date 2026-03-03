@@ -67,9 +67,9 @@ const Index = () => {
         <StatusCard
           title="Gas Sensor"
           icon={Flame}
-          value={data.gas === "NO" ? "Safe" : data.gas}
+          value={gasHigh ? `High (${data.gasValue})` : "Safe"}
           status={gasStatus}
-          subtitle={gasStatus === "alert" ? "Gas detected!" : "No gas detected"}
+          subtitle={gasHigh ? "⚠️ Gas level too high!" : `Level: ${data.gasValue}`}
           index={5}
         />
       </div>
