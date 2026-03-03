@@ -77,11 +77,8 @@ export function AdminSidebar() {
         )}
       </AnimatePresence>
 
-      <motion.aside
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 flex-shrink-0 p-5 flex flex-col border-r border-border transition-transform duration-300 ${
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 flex-shrink-0 p-5 flex flex-col border-r border-border transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         style={{ background: "hsl(var(--card))" }}
