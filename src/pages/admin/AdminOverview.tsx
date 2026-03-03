@@ -30,7 +30,7 @@ const AdminOverview = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08, duration: 0.4 }}
-            className="glass-card p-5"
+            className="glass-card p-3 sm:p-5"
           >
             <div className="flex items-center justify-between mb-3">
               <stat.icon className={`h-5 w-5 ${stat.color}`} />
