@@ -108,7 +108,7 @@ export function AdminSidebar() {
             <p className="text-xs text-foreground font-mono">v1.0</p>
           </div>
         </div>
-      </motion.aside>
+      </aside>
     </>
   );
 }
