@@ -14,6 +14,7 @@ export interface HomeData {
   temperature: number;
   humidity: number;
   gas: string;
+  gasValue: number;
   parking: {
     slot1: ParkingSlot;
     slot2: ParkingSlot;
