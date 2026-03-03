@@ -14,6 +14,7 @@ export interface HomeData {
   temperature: number;
   humidity: number;
   gas: string;
+  gasValue: number;
   parking: {
     slot1: ParkingSlot;
     slot2: ParkingSlot;
@@ -32,6 +33,7 @@ const defaultData: HomeData = {
   temperature: 0,
   humidity: 0,
   gas: "—",
+  gasValue: 0,
   parking: {
     slot1: { status: "—" },
     slot2: { status: "—" },
@@ -114,6 +116,7 @@ export function useFirebaseData() {
             temperature: num(val.temperature),
             humidity: num(val.humidity),
             gas: str(val.gas),
+            gasValue: num(val.gasValue),
             parking: {
               slot1: { status: slotStatus(parking.slot1) },
               slot2: { status: slotStatus(parking.slot2) },
