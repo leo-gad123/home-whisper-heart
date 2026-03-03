@@ -113,6 +113,7 @@ const Index = () => {
       </main>
 
       <ChatBot homeData={data} />
+      <VoiceAssistant homeData={data} />
     </div>
   );
 };
