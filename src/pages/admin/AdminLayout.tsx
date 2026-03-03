@@ -14,6 +14,7 @@ const AdminLayout = () => {
         <Outlet />
       </main>
       <ChatBot homeData={data} />
+      <VoiceAssistant homeData={data} />
     </div>
   );
 };
