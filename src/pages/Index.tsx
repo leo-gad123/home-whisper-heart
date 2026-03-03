@@ -29,7 +29,8 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState("overview");
   useHistoryLogger(data.temperature, data.humidity);
 
-  const gasStatus = data.gas !== "NO" && data.gas !== "—" ? "alert" : "active";
+  const gasHigh = data.gasValue > 500;
+  const gasStatus = gasHigh ? "alert" : "active";
 
   const renderDoors = () => (
     <section className="mb-6 sm:mb-8">
