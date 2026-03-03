@@ -33,6 +33,7 @@ const defaultData: HomeData = {
   temperature: 0,
   humidity: 0,
   gas: "—",
+  gasValue: 0,
   parking: {
     slot1: { status: "—" },
     slot2: { status: "—" },
