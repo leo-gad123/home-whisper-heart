@@ -42,7 +42,7 @@ const App = () => (
             >
               <Route index element={<AdminOverview />} />
               <Route path="users" element={<UserManagement />} />
-              <Route path="devices" element={<DeviceManagement />} />
+              
               <Route path="settings" element={<SystemConfig />} />
               <Route path="history" element={<DataHistory />} />
             </Route>
