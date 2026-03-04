@@ -12,7 +12,7 @@ import AdminOverview from "./pages/admin/AdminOverview";
 import UserManagement from "./pages/admin/UserManagement";
 import SystemConfig from "./pages/admin/SystemConfig";
 import DataHistory from "./pages/admin/DataHistory";
-import DeviceManagement from "./pages/admin/DeviceManagement";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
