@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { id: "/admin", label: "Overview", icon: LayoutDashboard },
   { id: "/admin/users", label: "User Management", icon: Users },
-  { id: "/admin/devices", label: "Device Management", icon: Cpu },
   { id: "/admin/settings", label: "System Config", icon: Settings },
   { id: "/admin/history", label: "Data History", icon: BarChart3 },
 ];
