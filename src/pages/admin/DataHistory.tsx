@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Download, Clock } from "lucide-react";
+import { Download, Clock, Thermometer, Droplets, Activity } from "lucide-react";
 import { database, ref, onValue } from "@/lib/firebase";
+import { useFirebaseData } from "@/hooks/useFirebaseData";
 import {
   ResponsiveContainer,
   LineChart,
