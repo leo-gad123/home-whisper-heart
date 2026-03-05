@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Download, Clock } from "lucide-react";
+import { Download, Clock, Thermometer, Droplets, Activity } from "lucide-react";
 import { database, ref, onValue } from "@/lib/firebase";
+import { useFirebaseData } from "@/hooks/useFirebaseData";
 import {
   ResponsiveContainer,
   LineChart,
@@ -26,6 +27,7 @@ const TIME_RANGES = [
 const DataHistory = () => {
   const [historyData, setHistoryData] = useState<Record<string, Record<string, DataPoint>>>({});
   const [range, setRange] = useState(0);
+  const { data: liveData, connected } = useFirebaseData();
 
   useEffect(() => {
     const historyRef = ref(database, "/history");
@@ -85,6 +87,50 @@ const DataHistory = () => {
         <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-muted-foreground text-sm font-medium hover:text-foreground transition-all">
           <Download className="h-4 w-4" /> Export CSV
         </button>
+      </div>
+
+      {/* Live Readings */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-warning/15 flex items-center justify-center">
+            <Thermometer className="h-5 w-5 text-warning" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Live Temperature</p>
+            <p className="text-xl font-bold font-mono text-foreground">{liveData.temperature}°C</p>
+          </div>
+          <span className={`ml-auto text-[10px] font-semibold uppercase tracking-wider ${connected ? "text-success" : "text-muted-foreground"}`}>
+            <Activity className="h-3 w-3 inline mr-1" />{connected ? "Live" : "Offline"}
+          </span>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center">
+            <Droplets className="h-5 w-5 text-info" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Live Humidity</p>
+            <p className="text-xl font-bold font-mono text-foreground">{liveData.humidity}%</p>
+          </div>
+          <span className={`ml-auto text-[10px] font-semibold uppercase tracking-wider ${connected ? "text-success" : "text-muted-foreground"}`}>
+            <Activity className="h-3 w-3 inline mr-1" />{connected ? "Live" : "Offline"}
+          </span>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-4 flex items-center gap-4">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${liveData.gas === "NO" ? "bg-success/15" : "bg-destructive/15"}`}>
+            <Activity className={`h-5 w-5 ${liveData.gas === "NO" ? "text-success" : "text-destructive"}`} />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Gas Sensor</p>
+            <p className={`text-xl font-bold font-mono ${liveData.gas === "NO" ? "text-success" : "text-destructive"}`}>
+              {liveData.gas === "NO" ? "Safe" : liveData.gas}
+            </p>
+          </div>
+          <span className={`ml-auto text-[10px] font-semibold uppercase tracking-wider ${connected ? "text-success" : "text-muted-foreground"}`}>
+            <Activity className="h-3 w-3 inline mr-1" />{connected ? "Live" : "Offline"}
+          </span>
+        </motion.div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
