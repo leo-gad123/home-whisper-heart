@@ -27,6 +27,7 @@ const TIME_RANGES = [
 const DataHistory = () => {
   const [historyData, setHistoryData] = useState<Record<string, Record<string, DataPoint>>>({});
   const [range, setRange] = useState(0);
+  const { data: liveData, connected } = useFirebaseData();
 
   useEffect(() => {
     const historyRef = ref(database, "/history");
