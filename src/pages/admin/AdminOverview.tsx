@@ -2,17 +2,37 @@ import { motion } from "framer-motion";
 import { Users, Settings, BarChart3, Activity } from "lucide-react";
 import { useFirebaseData } from "@/hooks/useFirebaseData";
 import { useAuth } from "@/hooks/useAuth";
-
-const stats = [
-  { label: "Active Devices", value: "6", icon: Activity, color: "text-primary" },
-  { label: "Users", value: "—", icon: Users, color: "text-accent" },
-  { label: "Config Items", value: "6", icon: Settings, color: "text-success" },
-  { label: "Data Points", value: "—", icon: BarChart3, color: "text-info" },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const AdminOverview = () => {
   const { data, connected } = useFirebaseData();
   const { user } = useAuth();
+  const [userCount, setUserCount] = useState<number | null>(null);
+  const [dataPoints, setDataPoints] = useState<number | null>(null);
+  const [configCount, setConfigCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const [profiles, temps, humidity, configs] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("temperature_history").select("id", { count: "exact", head: true }),
+        supabase.from("humidity_history").select("id", { count: "exact", head: true }),
+        supabase.from("system_config").select("id", { count: "exact", head: true }),
+      ]);
+      setUserCount(profiles.count ?? 0);
+      setDataPoints((temps.count ?? 0) + (humidity.count ?? 0));
+      setConfigCount(configs.count ?? 0);
+    };
+    fetchCounts();
+  }, []);
+
+  const stats = [
+    { label: "Active Devices", value: "6", icon: Activity, color: "text-primary" },
+    { label: "Users", value: userCount !== null ? String(userCount) : "…", icon: Users, color: "text-accent" },
+    { label: "Config Items", value: configCount !== null ? String(configCount) : "…", icon: Settings, color: "text-success" },
+    { label: "Data Points", value: dataPoints !== null ? String(dataPoints) : "…", icon: BarChart3, color: "text-info" },
+  ];
 
   return (
     <div>
