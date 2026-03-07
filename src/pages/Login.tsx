@@ -85,13 +85,13 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Email</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Username or Email</label>
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 rounded-xl bg-secondary border border-border px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  placeholder="admin@ewange.com"
+                  placeholder="name or email"
                   required
                 />
               </motion.div>

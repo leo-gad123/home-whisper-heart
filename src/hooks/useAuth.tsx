@@ -72,7 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
+    let email = identifier;
+    // If not an email, look up email by name in profiles
+    if (!identifier.includes("@")) {
+      const { data, error: lookupError } = await supabase
+        .from("profiles")
+        .select("email")
+        .ilike("name", identifier)
+        .limit(1)
+        .single();
+      if (lookupError || !data?.email) throw new Error("User not found");
+      email = data.email;
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
