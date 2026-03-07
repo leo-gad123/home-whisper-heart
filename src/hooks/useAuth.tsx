@@ -76,14 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let email = identifier;
     // If not an email, look up email by name in profiles
     if (!identifier.includes("@")) {
-      const { data, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email")
-        .ilike("name", identifier)
-        .limit(1)
-        .single();
-      if (lookupError || !data?.email) throw new Error("User not found");
-      email = data.email;
+      const { data, error: lookupError } = await supabase.rpc("get_email_by_name" as any, { _name: identifier });
+      if (lookupError || !data) throw new Error("User not found");
+      email = data as string;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
