@@ -156,10 +156,14 @@ const UserManagement = () => {
     setFbSaving(true);
     try {
       if (fbEditUser) {
-        await set(ref(database, `users/${fbEditUser.key}`), { name: fbForm.name.trim(), id: fbForm.id.trim() });
+        // If ID changed, remove old key and create new one
+        if (fbEditUser.key !== fbForm.id.trim()) {
+          await remove(ref(database, `users/${fbEditUser.key}`));
+        }
+        await set(ref(database, `users/${fbForm.id.trim()}`), { name: fbForm.name.trim() });
         toast.success("Device user updated");
       } else {
-        await push(ref(database, "users"), { name: fbForm.name.trim(), id: fbForm.id.trim() });
+        await set(ref(database, `users/${fbForm.id.trim()}`), { name: fbForm.name.trim() });
         toast.success("Device user created");
       }
       setFbModalOpen(false);
