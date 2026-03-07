@@ -58,8 +58,8 @@ const UserManagement = () => {
       if (data) {
         const list: FirebaseUser[] = Object.entries(data).map(([key, val]: [string, any]) => ({
           key,
-          name: val.name || "",
-          id: val.id || "",
+          name: typeof val === "object" ? (val.name || "") : String(val),
+          id: key,
         }));
         setFbUsers(list);
       } else {
