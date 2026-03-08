@@ -109,12 +109,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ users }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (action === "log_history") {
-      const { type, value } = payload;
-      const table = type === "temperature" ? "temperature_history" : "humidity_history";
-      await supabaseAdmin.from(table).insert({ value });
-      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
