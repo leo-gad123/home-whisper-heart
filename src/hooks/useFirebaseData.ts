@@ -95,53 +95,69 @@ export function useFirebaseData() {
     });
 
     const dbRef = ref(database, "/");
-    const unsubscribe = onValue(
-      dbRef,
-      (snapshot) => {
-        const val = snapshot.val();
-        if (val) {
-          const parking = val.parking || {};
-          const mainDoor = (typeof val.main_door === "object" && val.main_door) ? val.main_door : {};
-          const userId = mainDoor.user_id != null ? String(mainDoor.user_id) : "";
+    const tempRef = ref(database, "/temperature");
+    const humRef = ref(database, "/humidity");
 
-          // Look up user name from /users/{user_id}
-          let userName = "";
-          if (userId && val.users && typeof val.users === "object") {
-            const userEntry = val.users[userId];
-            if (userEntry && typeof userEntry === "object" && userEntry.name) {
-              userName = String(userEntry.name);
-            }
-          }
+    let rootVal: any = null;
+    let tempVal: number = 0;
+    let humVal: number = 0;
 
-          setData({
-            main_door: {
-              access: str(mainDoor.access),
-              door_state: str(mainDoor.door_state),
-              user_id: userId,
-              user_name: userName || (userId ? "Unknown User" : ""),
-            },
-            buzzer: str(val.buzzer),
-            lamp: str(val.lamp),
-            fan: str(val.fan),
-            curtains: str(val.curtains),
-            temperature: num(val.temperature),
-            humidity: num(val.humidity),
-            gas: str(val.gas),
-            gasValue: num(val.gasValue),
-            parking: {
-              slot1: { status: slotStatus(parking.slot1) },
-              slot2: { status: slotStatus(parking.slot2) },
-              gate: str(parking.gate),
-            },
-            water_pump: str(val.water_pump),
-            soil_moisture: num(val.soil_moisture),
-            gsm_last_command: str(val.gsm_last_command),
-          });
-          setConnected(true);
+    const updateData = () => {
+      if (!rootVal) return;
+      const val = rootVal;
+      const parking = val.parking || {};
+      const mainDoor = (typeof val.main_door === "object" && val.main_door) ? val.main_door : {};
+      const userId = mainDoor.user_id != null ? String(mainDoor.user_id) : "";
+
+      let userName = "";
+      if (userId && val.users && typeof val.users === "object") {
+        const userEntry = val.users[userId];
+        if (userEntry && typeof userEntry === "object" && userEntry.name) {
+          userName = String(userEntry.name);
         }
-      },
-      () => setConnected(false)
-    );
+      }
+
+      setData({
+        main_door: {
+          access: str(mainDoor.access),
+          door_state: str(mainDoor.door_state),
+          user_id: userId,
+          user_name: userName || (userId ? "Unknown User" : ""),
+        },
+        buzzer: str(val.buzzer),
+        lamp: str(val.lamp),
+        fan: str(val.fan),
+        curtains: str(val.curtains),
+        temperature: tempVal,
+        humidity: humVal,
+        gas: str(val.gas),
+        gasValue: num(val.gasValue),
+        parking: {
+          slot1: { status: slotStatus(parking.slot1) },
+          slot2: { status: slotStatus(parking.slot2) },
+          gate: str(parking.gate),
+        },
+        water_pump: str(val.water_pump),
+        soil_moisture: num(val.soil_moisture),
+        gsm_last_command: str(val.gsm_last_command),
+      });
+      setConnected(true);
+    };
+
+    const unsub1 = onValue(dbRef, (snapshot) => {
+      rootVal = snapshot.val();
+      if (rootVal) updateData();
+    }, () => setConnected(false));
+
+    const unsub2 = onValue(tempRef, (snapshot) => {
+      tempVal = num(snapshot.val());
+      updateData();
+    });
+
+    const unsub3 = onValue(humRef, (snapshot) => {
+      humVal = num(snapshot.val());
+      updateData();
+    });
 
     return () => unsubscribe();
   }, []);
