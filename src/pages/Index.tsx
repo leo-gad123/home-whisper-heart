@@ -8,6 +8,7 @@ import { StatusCard } from "@/components/StatusCard";
 import { EnvironmentGauge } from "@/components/EnvironmentGauge";
 import { ParkingSection } from "@/components/ParkingSection";
 import { ControlCard } from "@/components/ControlCard";
+import { SoilMoistureCard } from "@/components/SoilMoistureCard";
 import { ChatBot } from "@/components/ChatBot";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import {
