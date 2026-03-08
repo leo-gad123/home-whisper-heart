@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { database, ref, onValue } from "@/lib/firebase";
+import { database, ref, onValue, set } from "@/lib/firebase";
+import { get } from "firebase/database";
 
 export interface ParkingSlot {
   status: string;
@@ -84,6 +85,14 @@ export function useFirebaseData() {
       if (typeof raw === "string") return raw;
       return "—";
     };
+
+    // Initialize soil_moisture in Firebase if it doesn't exist
+    const soilRef = ref(database, "/soil_moisture");
+    get(soilRef).then((snap) => {
+      if (!snap.exists()) {
+        set(soilRef, 0);
+      }
+    });
 
     const dbRef = ref(database, "/");
     const unsubscribe = onValue(
