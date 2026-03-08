@@ -159,7 +159,7 @@ export function useFirebaseData() {
       updateData();
     });
 
-    return () => unsubscribe();
+    return () => { unsub1(); unsub2(); unsub3(); };
   }, []);
 
   return { data, connected };
