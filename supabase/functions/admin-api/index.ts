@@ -29,7 +29,17 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check if calling user is admin
+    const { action, ...payload } = await req.json();
+
+    // Allow authenticated users to log history without admin role
+    if (action === "log_history") {
+      const { type, value } = payload;
+      const table = type === "temperature" ? "temperature_history" : "humidity_history";
+      await supabaseAdmin.from(table).insert({ value });
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // All other actions require admin role
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -40,8 +50,6 @@ serve(async (req) => {
     if (!roleData) {
       return new Response(JSON.stringify({ error: "Forbidden: Admin only" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const { action, ...payload } = await req.json();
 
     if (action === "create_user") {
       const { email, password, name, role } = payload;
@@ -101,12 +109,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ users }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (action === "log_history") {
-      const { type, value } = payload;
-      const table = type === "temperature" ? "temperature_history" : "humidity_history";
-      await supabaseAdmin.from(table).insert({ value });
-      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
