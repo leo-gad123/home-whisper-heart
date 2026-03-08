@@ -41,6 +41,7 @@ const defaultData: HomeData = {
     gate: "—",
   },
   water_pump: "—",
+  soil_moisture: 0,
   gsm_last_command: "—",
 };
 
