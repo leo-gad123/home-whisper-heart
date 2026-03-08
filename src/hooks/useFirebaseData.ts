@@ -21,6 +21,7 @@ export interface HomeData {
     gate: string;
   };
   water_pump: string;
+  soil_moisture: number;
   gsm_last_command: string;
 }
 
@@ -40,6 +41,7 @@ const defaultData: HomeData = {
     gate: "—",
   },
   water_pump: "—",
+  soil_moisture: 0,
   gsm_last_command: "—",
 };
 
@@ -123,6 +125,7 @@ export function useFirebaseData() {
               gate: str(parking.gate),
             },
             water_pump: str(val.water_pump),
+            soil_moisture: num(val.soil_moisture),
             gsm_last_command: str(val.gsm_last_command),
           });
           setConnected(true);

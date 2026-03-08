@@ -8,6 +8,7 @@ import { StatusCard } from "@/components/StatusCard";
 import { EnvironmentGauge } from "@/components/EnvironmentGauge";
 import { ParkingSection } from "@/components/ParkingSection";
 import { ControlCard } from "@/components/ControlCard";
+import { SoilMoistureCard } from "@/components/SoilMoistureCard";
 import { ChatBot } from "@/components/ChatBot";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
 import {
@@ -65,13 +66,14 @@ const Index = () => {
           index={3}
         />
         <ControlCard title="Water Pump" icon={Droplet} value={data.water_pump} firebaseKey="water_pump" index={4} />
+        <SoilMoistureCard value={data.soil_moisture} index={5} />
         <StatusCard
           title="Gas Sensor"
           icon={Flame}
           value={gasHigh ? `High (${data.gasValue})` : "Safe"}
           status={gasStatus}
           subtitle={gasHigh ? "⚠️ Gas level too high!" : `Level: ${data.gasValue}`}
-          index={5}
+          index={6}
         />
       </div>
     </section>
