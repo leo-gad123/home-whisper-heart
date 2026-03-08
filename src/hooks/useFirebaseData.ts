@@ -95,8 +95,8 @@ export function useFirebaseData() {
     });
 
     const dbRef = ref(database, "/");
-    const tempRef = ref(database, "/temperature");
-    const humRef = ref(database, "/humidity");
+    const tempRef = ref(database, "/t");
+    const humRef = ref(database, "/h");
 
     let rootVal: any = null;
     let tempVal: number = 0;
