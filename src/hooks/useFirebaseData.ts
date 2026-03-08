@@ -86,6 +86,14 @@ export function useFirebaseData() {
       return "—";
     };
 
+    // Initialize soil_moisture in Firebase if it doesn't exist
+    const soilRef = ref(database, "/soil_moisture");
+    get(soilRef).then((snap) => {
+      if (!snap.exists()) {
+        set(soilRef, 0);
+      }
+    });
+
     const dbRef = ref(database, "/");
     const unsubscribe = onValue(
       dbRef,
