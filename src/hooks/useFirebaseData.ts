@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { database, ref, onValue } from "@/lib/firebase";
+import { database, ref, onValue, set } from "@/lib/firebase";
+import { get } from "firebase/database";
 
 export interface ParkingSlot {
   status: string;
