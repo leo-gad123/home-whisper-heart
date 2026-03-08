@@ -21,6 +21,7 @@ export interface HomeData {
     gate: string;
   };
   water_pump: string;
+  soil_moisture: number;
   gsm_last_command: string;
 }
 
