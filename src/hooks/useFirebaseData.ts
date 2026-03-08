@@ -125,6 +125,7 @@ export function useFirebaseData() {
               gate: str(parking.gate),
             },
             water_pump: str(val.water_pump),
+            soil_moisture: num(val.soil_moisture),
             gsm_last_command: str(val.gsm_last_command),
           });
           setConnected(true);
